@@ -14,6 +14,26 @@ interface IERC20Token {
   event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
+library SafeMath {
+    /**
+     * @dev Returns the addition of two unsigned integers, reverting on
+     * overflow.
+     *
+     * Counterpart to Solidity's `+` operator.
+     *
+     * Requirements:
+     *
+     * - Addition cannot overflow.
+     */
+    function add(uint256 a, uint256 b) internal pure returns (uint256) {
+        uint256 c = a + b;
+        require(c >= a, "SafeMath: addition overflow");
+
+        return c;
+    }
+}
+
+
 contract DriveThrough{
     struct Ticket{
         address payable owner;
@@ -22,8 +42,9 @@ contract DriveThrough{
         uint price;
         bool booked;
     }
+  
+    using SafeMath for uint;
 
-   
 
     address internal cUsdTokenAddress ;
     address internal adminAddress; // replace with your own address
@@ -60,7 +81,7 @@ contract DriveThrough{
         _tickets.price = _price;
         _tickets.booked = false;
 
-        ticketLength++;
+        ticketLength.add(1);
     }
 
     function updateTicket(
@@ -75,8 +96,6 @@ contract DriveThrough{
         _tickets.price = _price;
     }
  
-
-   
 
     function bookTicket(uint _index) notAdmin public {
         require(
