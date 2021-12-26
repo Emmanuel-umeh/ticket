@@ -14,6 +14,26 @@ interface IERC20Token {
   event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
+library SafeMath {
+    /**
+     * @dev Returns the addition of two unsigned integers, reverting on
+     * overflow.
+     *
+     * Counterpart to Solidity's `+` operator.
+     *
+     * Requirements:
+     *
+     * - Addition cannot overflow.
+     */
+    function add(uint256 a, uint256 b) internal pure returns (uint256) {
+        uint256 c = a + b;
+        require(c >= a, "SafeMath: addition overflow");
+
+        return c;
+    }
+}
+
+
 contract DriveThrough{
     struct Ticket{
         address payable owner;
@@ -22,8 +42,9 @@ contract DriveThrough{
         uint price;
         bool booked;
     }
+  
+    using SafeMath for uint;
 
-   
 
     address internal cUsdTokenAddress ;
     address internal adminAddress; // replace with your own address
@@ -32,12 +53,13 @@ contract DriveThrough{
     mapping(uint => Ticket) public tickets;
 
     
-
+    // check if user is admin
     modifier isAdmin(){
         require(msg.sender == adminAddress,"Only the admin can access this");
         _;
     }
 
+    // check user is not an admin
     modifier notAdmin(){
          require(msg.sender != adminAddress,"Cannot be admin");
         _;
@@ -47,7 +69,8 @@ contract DriveThrough{
         adminAddress = msg.sender;
         cUsdTokenAddress =  0x874069Fa1Eb16D44d622F2e0Ca25eeA172369bC1;
     }
-
+    
+    // function to add ticket
     function addTicket(
         string memory _ticketNo,
         string memory _category, 
@@ -60,9 +83,10 @@ contract DriveThrough{
         _tickets.price = _price;
         _tickets.booked = false;
 
-        ticketLength++;
+        ticketLength.add(1);
     }
-
+    
+    // function to update ticket
     function updateTicket(
         uint _ticketId,
           string memory _ticketNo,
@@ -75,9 +99,7 @@ contract DriveThrough{
         _tickets.price = _price;
     }
  
-
-   
-
+    // buy or book a ticket
     function bookTicket(uint _index) notAdmin public {
         require(
             IERC20Token(cUsdTokenAddress).transferFrom(
@@ -91,7 +113,8 @@ contract DriveThrough{
         tickets[_index].owner = payable(msg.sender);
         tickets[_index].booked = true;
     }
-
+    
+    // revoke ticket without refunding the user
     function revokeTicket(uint _index)  public{
 
         Ticket storage _tickets = tickets[_index];
@@ -99,18 +122,20 @@ contract DriveThrough{
         tickets[_index].booked = false;
     }
 
-
+    // change the admin
     function revokeOwnership(address _address) isAdmin public{
         adminAddress = _address;
     }
-
+    
+    // check if user is an admin
     function isUserAdmin(address _address) public view returns (bool){
         if(_address == adminAddress){
             return true;
         }
         return false;   
     } 
-
+    
+    // get total ticket count
     function getTicketLength() public view returns (uint) {
         return (ticketLength);
     }
